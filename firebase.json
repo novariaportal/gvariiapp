@@ -1,0 +1,3 @@
+git add firebase.json
+git commit -m "Move firebase config to GitHub for automation"
+git push origin main
