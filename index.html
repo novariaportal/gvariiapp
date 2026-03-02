@@ -6,66 +6,21 @@
     <title>Gvarii Citizens</title>
     
     <link rel="manifest" href="manifest.json">
-    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#1a4a8e">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Gvarii App">
 
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #1a4a8e; /* Gvarii Blue */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-        }
-
-        /* Clean Blue Header Bar (Status Bar area for PWA) */
-        .header {
-            background-color: #1a4a8e; 
-            width: 100%;
-            height: 44px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            z-index: 10;
-            flex-shrink: 0;
-        }
-
-        #app-wrapper { 
-            position: relative;
-            flex-grow: 1;
-            width: 100%;
-            display: flex; 
-        }
-
-        iframe { 
-            border: none; 
-            width: 100%; 
-            height: 100%; 
-            -webkit-overflow-scrolling: touch; 
-        }
-
-        /* Mobile Touch Optimization */
-        * { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #1a4a8e; }
+        .header { background-color: #1a4a8e; width: 100%; height: 44px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); z-index: 10; }
+        #app-wrapper { position: relative; flex-grow: 1; width: 100%; height: calc(100% - 44px); display: flex; }
+        iframe { border: none; width: 100%; height: 100%; }
     </style>
 </head>
 <body>
-
     <div class="header"></div>
-
     <div id="app-wrapper">
-        <iframe 
-            id="main-app" 
-            src="https://gvariiapp.base44.app/" 
-            referrerpolicy="no-referrer"
-            allow="clipboard-write; camera; microphone; geolocation"
-            title="Gvarii Citizens">
-        </iframe>
+        <iframe id="main-app" src="https://gvariiapp.base44.app/" allow="clipboard-write; camera; microphone; geolocation"></iframe>
     </div>
 
     <script>
@@ -73,48 +28,31 @@
         const BASE44_URL = "https://gvariiapp.base44.app";
         const FIREBASE_URL = "https://gvarii-app.firebaseapp.com";
 
-        // 1. SESSION HANDSHAKE (Fixes "Logged in on Base44 but not Firebase")
-        // If the URL has a session token, pass it into the iframe immediately
-        const urlParams = new URLSearchParams(window.location.search);
-        const session = urlParams.get('session');
+        // 1. CATCH SESSION FROM REDIRECT
+        // When Google/MS sends you back to Firebase, this grabs the token
+        const params = new URLSearchParams(window.location.search);
+        const session = params.get('session');
         if (session) {
             iframe.src = `${BASE44_URL}/?session=${session}`;
             window.history.replaceState({}, document.title, "/");
         }
 
-        // 2. THE BREAKOUT (Fixes 403 Forbidden Errors)
-        // Detects if the iframe is blocked or on a login page and jumps to top window
-        setInterval(() => {
-            try {
-                const currentUrl = iframe.contentWindow.location.href;
-                if (currentUrl.includes('login') || currentUrl.includes('auth')) {
+        // 2. THE ULTIMATE 403 FIX: PostMessage Bridge
+        // Instead of watching the URL, we listen for a "Failure" from Base44
+        window.addEventListener('message', (event) => {
+            if (event.origin === BASE44_URL) {
+                // If the app says "I need to log in", we force the top window to move
+                if (event.data === 'request-login' || event.data.type === 'auth-required') {
                     window.top.location.href = `${BASE44_URL}/login?from_url=${FIREBASE_URL}`;
                 }
-            } catch (e) {
-                // If we hit a 403, the provider (Google/MS) has blocked the iframe.
-                // We force a breakout to allow the secure login.
-                console.log("SSO Block detected. Breaking out for security...");
-            }
-        }, 2000);
-
-        // 3. SERVICE WORKER REGISTRATION
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('pwabuilder-sw.js').catch(err => console.log(err));
-            });
-        }
-
-        // 4. SYNC ON FOCUS
-        window.addEventListener('focus', () => {
-            try {
-                // Only reload if we aren't in the middle of a login process
-                if (!iframe.contentWindow.location.href.includes('login')) {
-                    iframe.contentWindow.location.reload();
-                }
-            } catch(e) {
-                // If blocked by cross-origin, don't force reload to avoid loops
             }
         });
+
+        // 3. FALLBACK: Direct Link Check
+        // If the iframe is blank (403), this allows a manual click to fix it
+        iframe.onerror = function() {
+            window.top.location.href = `${BASE44_URL}/login?from_url=${FIREBASE_URL}`;
+        };
     </script>
 </body>
 </html>
