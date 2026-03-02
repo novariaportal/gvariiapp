@@ -1,62 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Gvarii Citizens Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gvarii Republic Portal</title>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #ffffff; font-family: -apple-system, sans-serif; }
-        #app-wrapper { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; }
-        iframe { border: none; width: 100%; height: 100%; flex-grow: 1; }
-        
-        /* The "Repair" Button Styling */
-        #repair-container {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            display: none; z-index: 10000;
-        }
-        .repair-btn {
-            background: #4285F4; color: white; padding: 16px 28px; border-radius: 50px;
-            text-decoration: none; font-weight: bold; font-size: 15px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3); border: 2px solid white;
-            cursor: pointer; display: inline-block;
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+        iframe { border: none; width: 100%; height: 100%; }
+        #login-btn { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            padding: 20px; background: #1a73e8; color: white; border-radius: 8px;
+            text-decoration: none; font-family: sans-serif; font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <div id="repair-container">
-        <a href="https://gvariiapp.base44.app/login?from_url=https%3A%2F%2Fgvariiapp.firebaseapp.com%2F" 
-           target="_top" class="repair-btn">
-           ⚠️ Click to Sign In (Google/Apple/MS)
-        </a>
-    </div>
+    <iframe id="gvarii-frame" src="https://gvariiapp.base44.app/"></iframe>
 
-    <div id="app-wrapper">
-        <iframe id="main-app" src="https://gvariiapp.base44.app/"></iframe>
-    </div>
+    <a id="login-btn" style="display:none;" 
+       href="https://gvariiapp.base44.app/login?from_url=https://gvarii-app.firebaseapp.com" 
+       target="_top">
+       Click here to Sign In to Gvarii
+    </a>
 
     <script>
-        const iframe = document.getElementById('main-app');
-        const repairContainer = document.getElementById('repair-container');
+        const frame = document.getElementById('gvarii-frame');
+        const btn = document.getElementById('login-btn');
 
-        // This "Watcher" detects if the login page is being blocked
+        // This checks if the iframe is stuck on the login page
         setInterval(() => {
             try {
-                // If we can read the URL, the user is still on your site (Email login)
-                const currentPath = iframe.contentWindow.location.pathname;
-                
-                // If they are on the login page specifically, we show the button just in case
-                if (currentPath.includes('login')) {
-                    repairContainer.style.display = 'block';
-                } else {
-                    repairContainer.style.display = 'none';
-                }
+                // If the iframe redirects to Base44's login, it will block this script
+                // That's our cue to show the "Teleport" button!
+                const check = frame.contentWindow.location.href;
             } catch (e) {
-                // If we hit an error, it's because the iframe tried to load Google/Apple/MS
-                // and the browser blocked it. Show the button!
-                repairContainer.style.display = 'block';
+                btn.style.display = 'block';
+                frame.style.display = 'none';
             }
-        }, 2000);
+        }, 1000);
     </script>
 </body>
 </html>
