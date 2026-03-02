@@ -17,7 +17,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #1a4a8e; 
+            background-color: #1a4a8e; /* Gvarii Blue */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -26,11 +26,11 @@
             overflow: hidden;
         }
 
-        /* The Blue Header - Tagline Removed */
+        /* Clean Blue Header Bar (Status Bar area for PWA) */
         .header {
             background-color: #1a4a8e; 
             width: 100%;
-            height: 44px; /* Standard mobile header height */
+            height: 44px; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
             z-index: 10;
             flex-shrink: 0;
@@ -50,7 +50,7 @@
             -webkit-overflow-scrolling: touch; 
         }
 
-        /* Clean Mobile Touch */
+        /* Mobile Touch Optimization */
         * { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
@@ -70,27 +70,49 @@
 
     <script>
         const iframe = document.getElementById('main-app');
+        const BASE44_URL = "https://gvariiapp.base44.app";
+        const FIREBASE_URL = "https://gvarii-app.firebaseapp.com";
 
-        // 1. SERVICE WORKER REGISTRATION
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('pwabuilder-sw.js')
-                    .then(reg => console.log('PWA Active'))
-                    .catch(err => console.error('PWA Failed', err));
-            });
-        }
-
-        // 2. URL CLEANER
-        if (window.location.href.includes('session') || window.location.href.includes('token')) {
+        // 1. SESSION HANDSHAKE (Fixes "Logged in on Base44 but not Firebase")
+        // If the URL has a session token, pass it into the iframe immediately
+        const urlParams = new URLSearchParams(window.location.search);
+        const session = urlParams.get('session');
+        if (session) {
+            iframe.src = `${BASE44_URL}/?session=${session}`;
             window.history.replaceState({}, document.title, "/");
         }
 
-        // 3. SYNC ON FOCUS
+        // 2. THE BREAKOUT (Fixes 403 Forbidden Errors)
+        // Detects if the iframe is blocked or on a login page and jumps to top window
+        setInterval(() => {
+            try {
+                const currentUrl = iframe.contentWindow.location.href;
+                if (currentUrl.includes('login') || currentUrl.includes('auth')) {
+                    window.top.location.href = `${BASE44_URL}/login?from_url=${FIREBASE_URL}`;
+                }
+            } catch (e) {
+                // If we hit a 403, the provider (Google/MS) has blocked the iframe.
+                // We force a breakout to allow the secure login.
+                console.log("SSO Block detected. Breaking out for security...");
+            }
+        }, 2000);
+
+        // 3. SERVICE WORKER REGISTRATION
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('pwabuilder-sw.js').catch(err => console.log(err));
+            });
+        }
+
+        // 4. SYNC ON FOCUS
         window.addEventListener('focus', () => {
             try {
-                iframe.contentWindow.location.reload();
+                // Only reload if we aren't in the middle of a login process
+                if (!iframe.contentWindow.location.href.includes('login')) {
+                    iframe.contentWindow.location.reload();
+                }
             } catch(e) {
-                iframe.src = iframe.src;
+                // If blocked by cross-origin, don't force reload to avoid loops
             }
         });
     </script>
