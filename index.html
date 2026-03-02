@@ -3,75 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Republic of Gvarii Citizens</title>
-
-    <link rel="icon" type="image/jpeg" href="Gvarii_Flag.jpg">
-    <link rel="manifest" href="manifest.json">
-    
-    <meta name="theme-color" content="#3498db">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
+    <title>Gvarii Citizens Portal</title>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #ffffff; position: fixed; }
-        #app-wrapper { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; overflow: hidden; }
-        iframe { border: none; width: 100%; height: 100%; flex-grow: 1; -webkit-overflow-scrolling: touch; }
-        * { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #ffffff; font-family: -apple-system, sans-serif; }
+        #app-wrapper { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; }
+        iframe { border: none; width: 100%; height: 100%; flex-grow: 1; }
+        
+        /* The "Repair" Button Styling */
+        #repair-container {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: none; z-index: 10000;
+        }
+        .repair-btn {
+            background: #4285F4; color: white; padding: 16px 28px; border-radius: 50px;
+            text-decoration: none; font-weight: bold; font-size: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3); border: 2px solid white;
+            cursor: pointer; display: inline-block;
+        }
     </style>
 </head>
 <body>
 
+    <div id="repair-container">
+        <a href="https://gvariiapp.base44.app/login?from_url=https%3A%2F%2Fgvariiapp.base44.app%2F" 
+           target="_top" class="repair-btn">
+           ⚠️ Click to Sign In (Google/Apple/MS)
+        </a>
+    </div>
+
     <div id="app-wrapper">
-        <iframe 
-            id="main-app"
-            src="https://gvariiapp.base44.app/" 
-            referrerpolicy="no-referrer"
-            sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation"
-            allow="clipboard-write; camera; microphone; geolocation; fullscreen"
-            title="Gvarii Citizens">
-        </iframe>
+        <iframe id="main-app" src="https://gvariiapp.base44.app/"></iframe>
     </div>
 
     <script>
         const iframe = document.getElementById('main-app');
+        const repairContainer = document.getElementById('repair-container');
 
-        // 1. SERVICE WORKER
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('pwabuilder-sw.js').catch(err => console.log(err));
-            });
-        }
-
-        // 2. LOGIN SUCCESS LISTENER
-        window.addEventListener('message', (event) => {
-            if (event.origin === "https://gvariiapp.base44.app" && event.data === 'login-success') {
-                iframe.contentWindow.location.reload();
-            }
-        });
-
-        // 3. THE GOOGLE LOGIN FIX (Breakout Logic)
-        // Since we can't read the URL of Google, we detect when the iframe stops responding 
-        // (which happens when it hits a restricted page) and offer a breakout.
+        // This "Watcher" detects if the login page is being blocked
         setInterval(() => {
             try {
-                // If this fails, it means the iframe is on a different domain (like Google)
-                const check = iframe.contentWindow.location.href;
+                // If we can read the URL, the user is still on your site (Email login)
+                const currentPath = iframe.contentWindow.location.pathname;
+                
+                // If they are on the login page specifically, we show the button just in case
+                if (currentPath.includes('login')) {
+                    repairContainer.style.display = 'block';
+                } else {
+                    repairContainer.style.display = 'none';
+                }
             } catch (e) {
-                // We are in a cross-origin state. 
-                // We can't force a redirect easily, but if the user is stuck, 
-                // they can tap the "Gvarii" title to force a refresh of the main window.
-                console.warn("Iframe blocked. Cross-origin login likely in progress.");
+                // If we hit an error, it's because the iframe tried to load Google/Apple/MS
+                // and the browser blocked it. Show the button!
+                repairContainer.style.display = 'block';
             }
         }, 2000);
-
-        // 4. SMART REDIRECT FOR OAUTH
-        // This listens for any attempt to open a new window (like a Google Popup)
-        // and ensures it happens at the TOP level.
-        window.addEventListener('click', (e) => {
-            if (e.target.tagName === 'A' && e.target.href.includes('accounts.google.com')) {
-                window.top.location.href = e.target.href;
-            }
-        });
     </script>
 </body>
 </html>
