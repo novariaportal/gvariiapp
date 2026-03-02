@@ -1,43 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gvarii Republic Portal</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Gvarii Citizens</title>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-        iframe { border: none; width: 100%; height: 100%; }
-        #login-btn { 
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: #003366; }
+        iframe { border: none; width: 100%; height: 100%; display: block; }
+        
+        /* The button from your image */
+        #login-container {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            padding: 20px; background: #1a73e8; color: white; border-radius: 8px;
+            display: none; text-align: center; width: 90%;
+        }
+        .btn {
+            background: #4285f4; color: white; padding: 18px 30px; border-radius: 50px;
             text-decoration: none; font-family: sans-serif; font-weight: bold;
+            border: 2px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: inline-block;
         }
     </style>
 </head>
 <body>
 
-    <iframe id="gvarii-frame" src="https://gvariiapp.base44.app/"></iframe>
+    <iframe id="app-frame" src="https://gvariiapp.base44.app/"></iframe>
 
-    <a id="login-btn" style="display:none;" 
-       href="https://gvariiapp.base44.app/login?from_url=https://gvarii-app.firebaseapp.com" 
-       target="_top">
-       Click here to Sign In to Gvarii
-    </a>
+    <div id="login-container">
+        <a href="https://gvariiapp.base44.app/login?from_url=https://gvarii-app.firebaseapp.com" 
+           target="_top" class="btn">
+           ⚠️ Click to Sign In (Google/Apple/MS)
+        </a>
+    </div>
 
     <script>
-        const frame = document.getElementById('gvarii-frame');
-        const btn = document.getElementById('login-btn');
+        const frame = document.getElementById('app-frame');
+        const loginContainer = document.getElementById('login-container');
 
-        // This checks if the iframe is stuck on the login page
-        setInterval(() => {
+        // Monitor the iframe
+        const checkSession = setInterval(() => {
             try {
-                // If the iframe redirects to Base44's login, it will block this script
-                // That's our cue to show the "Teleport" button!
-                const check = frame.contentWindow.location.href;
+                // If we can see the URL, it means we are NOT blocked (already logged in)
+                const currentUrl = frame.contentWindow.location.href;
+                loginContainer.style.display = 'none';
             } catch (e) {
-                btn.style.display = 'block';
-                frame.style.display = 'none';
+                // If blocked, the iframe is trying to show the login page
+                // We show the button so the user can 'Break Out' and sign in properly
+                loginContainer.style.display = 'block';
             }
-        }, 1000);
+        }, 2000);
+
+        // Success Handler: If the URL contains 'session', hide the button immediately
+        if (window.location.href.includes('session') || window.location.href.includes('token')) {
+            loginContainer.style.display = 'none';
+            // Clean the URL bar to keep it looking professional
+            window.history.replaceState({}, document.title, "/");
+        }
     </script>
 </body>
 </html>
