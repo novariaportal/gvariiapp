@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Republic of Gvarii Citizens</title>
+    <title>Gvarii Citizens</title>
 
     <link rel="icon" type="image/jpeg" href="Gvarii_Flag.jpg">
     <link rel="manifest" href="manifest.json">
@@ -72,7 +72,7 @@
             });
         }
 
-        // 2. LOGIN LISTENER (Matches your Gvarii origin)
+        // 2. LOGIN LISTENER
         window.addEventListener('message', (event) => {
             if (event.origin === "https://gvariiapp.base44.app") {
                 if (event.data === 'login-success') {
@@ -89,6 +89,27 @@
                 iframe.contentWindow.location.reload();
             } catch (e) {
                 console.log("Cross-origin reload blocked.");
+            }
+        });
+
+        // 4. IFRAME BUSTER FOR LOGIN
+        // This ensures Google/Apple/Microsoft login screens break out of the iframe
+        iframe.addEventListener('load', () => {
+            try {
+                const currentPath = iframe.contentWindow.location.href;
+                
+                if (currentPath.includes('accounts.google.com') || 
+                    currentPath.includes('appleid.apple.com') || 
+                    currentPath.includes('account.live.com')) {
+                    
+                    console.log("Login provider detected. Breaking out...");
+                    window.location.href = currentPath;
+                }
+            } catch (e) {
+                // If we hit a cross-origin error, it usually means the login 
+                // page has already loaded but is being blocked.
+                // This catch block helps handle those invisible security blocks.
+                console.log("Iframe redirected to a protected domain.");
             }
         });
     </script>
