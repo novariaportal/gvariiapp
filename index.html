@@ -10,90 +10,38 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #1a4a8e; font-family: sans-serif; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #1a4a8e; }
         .header { background-color: #1a4a8e; width: 100%; height: 44px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); z-index: 10; }
-        
-        /* The Verification Screen */
-        #phone-gate {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            height: calc(100% - 44px); color: white; text-align: center;
-        }
-        input { padding: 12px; border-radius: 8px; border: none; width: 260px; margin: 10px 0; font-size: 16px; }
-        .gate-btn { background: #27ae60; color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-
-        /* Hidden initially, shown after verification */
-        #app-wrapper { display: none; position: relative; flex-grow: 1; width: 100%; height: calc(100% - 44px); }
+        #app-wrapper { position: relative; flex-grow: 1; width: 100%; height: calc(100% - 44px); display: flex; }
         iframe { border: none; width: 100%; height: 100%; }
-        #recaptcha-container { margin: 10px 0; }
     </style>
 </head>
 <body>
     <div class="header"></div>
-
-    <div id="phone-gate">
-        <h2>Citizen Access</h2>
-        <p>Verify your phone number to proceed</p>
-        <input type="tel" id="phone-input" placeholder="+1 123 456 7890">
-        <div id="recaptcha-container"></div>
-        <button class="gate-btn" onclick="sendOTP()">Get Access Code</button>
-    </div>
-
     <div id="app-wrapper">
         <iframe id="main-app" src="https://gvariiapp.base44.app/" allow="clipboard-write; camera; microphone; geolocation"></iframe>
     </div>
 
     <script>
-        // --- FIREBASE SETUP ---
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "gvarii-app.firebaseapp.com",
-            projectId: "gvarii-app"
-        };
-        firebase.initializeApp(firebaseConfig);
-
         const iframe = document.getElementById('main-app');
-        const gate = document.getElementById('phone-gate');
-        const wrapper = document.getElementById('app-wrapper');
         const BASE44_URL = "https://gvariiapp.base44.app";
         const FIREBASE_URL = "https://gvarii-app.firebaseapp.com";
 
-        // --- PHONE VERIFICATION LOGIC ---
-        function sendOTP() {
-            const phone = document.getElementById('phone-input').value;
-            const appVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { 'size': 'invisible' });
-
-            firebase.auth().signInWithPhoneNumber(phone, appVerifier)
-                .then((confirmResult) => {
-                    const code = prompt("Enter the 6-digit code sent to your phone:");
-                    return confirmResult.confirm(code);
-                })
-                .then(() => {
-                    // SUCCESS: Unlock the app
-                    gate.style.display = 'none';
-                    wrapper.style.display = 'flex';
-                })
-                .catch((err) => alert("Error: " + err.message));
-        }
-
-        // --- KEEP YOUR EXISTING SSO LOGIC BELOW ---
-
         // 1. CATCH SESSION FROM REDIRECT
+        // When Google/MS sends you back to Firebase, this grabs the token
         const params = new URLSearchParams(window.location.search);
         const session = params.get('session');
         if (session) {
-            gate.style.display = 'none'; // Auto-unlock if coming back from SSO
-            wrapper.style.display = 'flex';
             iframe.src = `${BASE44_URL}/?session=${session}`;
             window.history.replaceState({}, document.title, "/");
         }
 
         // 2. THE ULTIMATE 403 FIX: PostMessage Bridge
+        // Instead of watching the URL, we listen for a "Failure" from Base44
         window.addEventListener('message', (event) => {
             if (event.origin === BASE44_URL) {
+                // If the app says "I need to log in", we force the top window to move
                 if (event.data === 'request-login' || event.data.type === 'auth-required') {
                     window.top.location.href = `${BASE44_URL}/login?from_url=${FIREBASE_URL}`;
                 }
@@ -101,6 +49,7 @@
         });
 
         // 3. FALLBACK: Direct Link Check
+        // If the iframe is blank (403), this allows a manual click to fix it
         iframe.onerror = function() {
             window.top.location.href = `${BASE44_URL}/login?from_url=${FIREBASE_URL}`;
         };
