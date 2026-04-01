@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin 2026</title>
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --panel: #ffffff;
+      --text: #111827;
+      --muted: #4b5563;
+      --football: #2563eb;
+      --portal: #059669;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      padding: 16px;
+    }
+
+    .dialog {
+      width: min(92vw, 520px);
+      background: var(--panel);
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+    }
+
+    p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .actions {
+      display: grid;
+      gap: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .08s ease, opacity .2s ease;
+    }
+
+    button:hover { opacity: .95; }
+    button:active { transform: translateY(1px); }
+
+    .football { background: var(--football); color: #fff; }
+    .portal { background: var(--portal); color: #fff; }
+
+    .frame-wrap {
+      width: 100%;
+      height: 100vh;
+      display: none;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #fff;
+    }
+
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 48px;
+      background: #111827;
+      color: #fff;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 0 12px;
+      z-index: 20;
+    }
+
+    .topbar button {
+      background: #374151;
+      color: #fff;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 13px;
+    }
+
+    .topbar .label {
+      font-size: 14px;
+      opacity: .9;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .with-topbar {
+      margin-top: 48px;
+      height: calc(100vh - 48px);
+    }
+  </style>
+</head>
+<body>
+  <div id="chooser" class="overlay" role="dialog" aria-modal="true" aria-labelledby="admin2026-title">
+    <div class="dialog">
+      <h1 id="admin2026-title">Admin 2026</h1>
+      <p>Select which admin panel you want to access.</p>
+      <div class="actions">
+        <button class="football" onclick="openAdmin('https://novaria.base44.app/footballadmin', 'Football Admin')">
+          Access Football Admin
+        </button>
+        <button class="portal" onclick="openAdmin('https://novaria.base44.app/admingvarii2026', 'Portal Admin')">
+          Access Portal Admin
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="topbar" class="topbar" aria-live="polite">
+    <button onclick="goBack()">Back</button>
+    <div id="currentLabel" class="label">Loading…</div>
+  </div>
+
+  <div id="frameWrap" class="frame-wrap">
+    <iframe id="adminFrame" title="Selected Admin Panel" referrerpolicy="no-referrer"></iframe>
+  </div>
+
+  <script>
+    const chooser = document.getElementById('chooser');
+    const frameWrap = document.getElementById('frameWrap');
+    const frame = document.getElementById('adminFrame');
+    const topbar = document.getElementById('topbar');
+    const currentLabel = document.getElementById('currentLabel');
+
+    function openAdmin(url, label) {
+      chooser.style.display = 'none';
+      topbar.style.display = 'flex';
+      frameWrap.style.display = 'block';
+      frameWrap.classList.add('with-topbar');
+      currentLabel.textContent = label + ' — ' + url;
+      frame.src = url;
+    }
+
+    function goBack() {
+      frame.src = 'about:blank';
+      frameWrap.style.display = 'none';
+      topbar.style.display = 'none';
+      chooser.style.display = 'flex';
+    }
+  </script>
+</body>
+</html>
