@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin 2026</title>
+  <title>Admin</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -74,20 +74,6 @@
     .football { background: var(--football); color: #fff; }
     .portal { background: var(--portal); color: #fff; }
 
-    .frame-wrap {
-      width: 100%;
-      height: 100vh;
-      display: none;
-    }
-
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: 0;
-      display: block;
-      background: #fff;
-    }
-
     .topbar {
       position: fixed;
       top: 0;
@@ -111,17 +97,24 @@
       font-size: 13px;
     }
 
-    .topbar .label {
+    .label {
       font-size: 14px;
-      opacity: .9;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      opacity: .95;
     }
 
-    .with-topbar {
+    .frame-wrap {
+      display: none;
       margin-top: 48px;
       height: calc(100vh - 48px);
+      width: 100%;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #fff;
     }
   </style>
 </head>
@@ -141,9 +134,9 @@
     </div>
   </div>
 
-  <div id="topbar" class="topbar" aria-live="polite">
+  <div id="topbar" class="topbar">
     <button onclick="goBack()">Back</button>
-    <div id="currentLabel" class="label">Loading…</div>
+    <div id="currentLabel" class="label"></div>
   </div>
 
   <div id="frameWrap" class="frame-wrap">
@@ -151,6 +144,16 @@
   </div>
 
   <script>
+    // FRONTEND-ONLY CHECK (not secure against advanced users)
+    (function () {
+      const PASSWORD = "novariabetterthangvarii";
+      const input = prompt("Enter Admin password:");
+      if (input !== PASSWORD) {
+        document.body.innerHTML = "<div style='padding:24px;font-family:Arial,sans-serif;'><h2>Access denied</h2><p>Incorrect password.</p></div>";
+        throw new Error("Unauthorized");
+      }
+    })();
+
     const chooser = document.getElementById('chooser');
     const frameWrap = document.getElementById('frameWrap');
     const frame = document.getElementById('adminFrame');
@@ -161,8 +164,7 @@
       chooser.style.display = 'none';
       topbar.style.display = 'flex';
       frameWrap.style.display = 'block';
-      frameWrap.classList.add('with-topbar');
-      currentLabel.textContent = label;
+      currentLabel.textContent = label; // URL hidden
       frame.src = url;
     }
 
